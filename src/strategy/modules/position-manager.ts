@@ -80,7 +80,7 @@ export class PositionManager {
       return;
     }
 
-    const addPrice = this.position.side === 'long' ? motherBar.levels.n100 : motherBar.levels.p100;
+    const addPrice = this.position.side === 'long' ? motherBar.levels.n100 : motherBar.levels.p200;
     if (!priceTouches(sample.low, sample.high, addPrice)) {
       return;
     }
@@ -97,11 +97,7 @@ export class PositionManager {
     this.position.addEntryTime = sample.timestamp;
 
     if (this.position.takeProfitEnabled) {
-      if (this.position.side === 'long') {
-        this.position.takeProfit = motherBar.levels.n61_8;
-      } else {
-        this.position.takeProfit = motherBar.levels.p161_8;
-      }
+      this.position.takeProfit = this.position.averagePrice;
     }
   }
 
