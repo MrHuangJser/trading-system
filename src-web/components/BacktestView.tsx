@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import ChartPanel from './ChartPanel';
 import SummaryPanel from './SummaryPanel';
 import TradeTable from './TradeTable';
-import { runBacktest, API_BASE } from '../api/backtest';
+import { runBacktest } from '../api/backtest';
+import { listDatasets } from '../api/data';
 import {
   SUPPORTED_TIMEFRAMES,
   type BacktestPayload,
@@ -12,12 +13,10 @@ import {
   type TradeMarker,
 } from '../types';
 import type { JSX } from 'react';
-
-const DATASETS_ENDPOINT = `${API_BASE}/api/data`;
+import DatasetManager from './DatasetManager';
 
 interface FormState {
   timeframe: Timeframe;
-  datasetId: string;
   baseQuantity: string;
   contractMultiplier: string;
   seconds: string;
@@ -29,7 +28,6 @@ interface FormState {
 
 const INITIAL_FORM: FormState = {
   timeframe: '1m',
-  datasetId: '',
   baseQuantity: '',
   contractMultiplier: '',
   seconds: '',
@@ -39,34 +37,7 @@ const INITIAL_FORM: FormState = {
   enableShortTakeProfit: true,
 };
 
-function formatDatasetOption(dataset: DatasetSummary): string {
-  const name = dataset.originalName || dataset.id;
-  const details: string[] = [];
-  if (Number.isFinite(dataset.rows) && dataset.rows > 0) {
-    details.push(`${dataset.rows.toLocaleString()} 行`);
-  }
-  if (dataset.isActive) {
-    details.push('当前激活');
-  }
-  const date = new Date(dataset.uploadedAt);
-  if (!Number.isNaN(date.getTime())) {
-    details.push(date.toLocaleDateString('zh-CN'));
-  }
-  if (details.length === 0) {
-    return name;
-  }
-  return `${name} · ${details.join(' · ')}`;
-}
-
-async function fetchDatasets(): Promise<DatasetSummary[]> {
-  const response = await fetch(DATASETS_ENDPOINT);
-  if (!response.ok) {
-    throw new Error(`无法加载数据集 (${response.status})`);
-  }
-  return (await response.json()) as DatasetSummary[];
-}
-
-function buildRequestFromForm(form: FormState): BacktestRequest {
+function buildRequestFromForm(form: FormState, datasetId: string | null): BacktestRequest {
   const request: BacktestRequest = {
     timeframe: form.timeframe,
     enableLongEntry: form.enableLongEntry,
@@ -75,8 +46,8 @@ function buildRequestFromForm(form: FormState): BacktestRequest {
     enableShortTakeProfit: form.enableShortTakeProfit,
   };
 
-  if (form.datasetId) {
-    request.datasetId = form.datasetId;
+  if (datasetId) {
+    request.datasetId = datasetId;
   }
 
   const baseQuantity = Number.parseInt(form.baseQuantity, 10);
@@ -107,6 +78,36 @@ export default function BacktestView(): JSX.Element {
   const [datasets, setDatasets] = useState<DatasetSummary[]>([]);
   const [datasetsLoading, setDatasetsLoading] = useState(false);
   const [datasetError, setDatasetError] = useState<string | null>(null);
+  const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const refreshDatasets = useCallback(async () => {
+    try {
+      const list = await listDatasets();
+      if (!mountedRef.current) {
+        return;
+      }
+      setDatasets(list);
+      setDatasetError(null);
+      setSelectedDatasetId((previous) => {
+        if (previous && !list.some((dataset) => dataset.id === previous)) {
+          return null;
+        }
+        return previous;
+      });
+    } catch (err) {
+      if (mountedRef.current) {
+        setDatasetError((err as Error).message || '无法加载数据集列表');
+      }
+      throw err;
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -146,12 +147,7 @@ export default function BacktestView(): JSX.Element {
     (async () => {
       try {
         setDatasetsLoading(true);
-        const list = await fetchDatasets();
-        if (cancelled) {
-          return;
-        }
-        setDatasets(list);
-        setDatasetError(null);
+        await refreshDatasets();
       } catch (err) {
         if (!cancelled) {
           setDatasetError((err as Error).message || '无法加载数据集列表');
@@ -165,7 +161,7 @@ export default function BacktestView(): JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshDatasets]);
 
   const markers: TradeMarker[] = useMemo(() => {
     if (!payload) {
@@ -211,7 +207,7 @@ export default function BacktestView(): JSX.Element {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const request = buildRequestFromForm(form);
+      const request = buildRequestFromForm(form, selectedDatasetId);
       const result = await runBacktest(request);
       setPayload(result);
       setForm((previous) => ({
@@ -260,6 +256,15 @@ export default function BacktestView(): JSX.Element {
       </header>
 
       <section className="app__section">
+        <DatasetManager
+          datasets={datasets}
+          loading={datasetsLoading}
+          error={datasetError}
+          selectedDatasetId={selectedDatasetId}
+          onSelectDataset={(datasetId) => setSelectedDatasetId(datasetId)}
+          refreshDatasets={refreshDatasets}
+        />
+
         <form className="backtest-form" onSubmit={handleSubmit}>
           <div className="backtest-form__grid">
             <label className="backtest-form__field">
@@ -280,28 +285,6 @@ export default function BacktestView(): JSX.Element {
                   </option>
                 ))}
               </select>
-            </label>
-
-            <label className="backtest-form__field">
-              <span>数据集</span>
-              <select
-                value={form.datasetId}
-                onChange={(event) =>
-                  setForm((previous) => ({
-                    ...previous,
-                    datasetId: event.target.value,
-                  }))
-                }
-                disabled={datasetsLoading || submitting}
-              >
-                <option value="">使用当前配置</option>
-                {datasets.map((dataset) => (
-                  <option key={dataset.id} value={dataset.id} title={dataset.note ?? undefined}>
-                    {formatDatasetOption(dataset)}
-                  </option>
-                ))}
-              </select>
-              {datasetError ? <span className="backtest-form__hint">{datasetError}</span> : null}
             </label>
 
             <label className="backtest-form__field">
