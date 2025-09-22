@@ -1,3 +1,5 @@
+import type { Timeframe } from './lib/timeframe';
+
 export interface ParsedTimestamp {
   raw: string;
   date: string; // YYYY-MM-DD
@@ -27,6 +29,10 @@ export interface MinuteBar {
   low: number;
   close: number;
   volume: number;
+}
+
+export interface TimeframeBar extends MinuteBar {
+  timeframe: Timeframe;
 }
 
 export type PositionSide = 'long' | 'short';
