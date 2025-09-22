@@ -11,7 +11,7 @@ import type { BacktestRequestDto } from './dto/backtest-request.dto';
 export class BacktestService {
   constructor(private readonly dataService: DataService) {}
 
-  runBacktest(request: BacktestRequestDto) {
+  async runBacktest(request: BacktestRequestDto) {
     const baseConfig = this.dataService.getBaseConfig();
     const strategyConfig: StrategyConfig = {
       ...baseConfig,
@@ -23,7 +23,7 @@ export class BacktestService {
       enableShortTakeProfit: request.enableShortTakeProfit ?? baseConfig.enableShortTakeProfit,
     };
 
-    const seconds = this.dataService.getSeconds();
+    const seconds = await this.dataService.getSeconds();
     const result = runBacktest(seconds, strategyConfig, {
       secondLimit: request.seconds ?? null,
     });
