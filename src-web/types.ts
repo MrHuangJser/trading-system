@@ -1,3 +1,7 @@
+export const SUPPORTED_TIMEFRAMES = ['1m', '5m', '15m', '30m', '1h'] as const;
+
+export type Timeframe = (typeof SUPPORTED_TIMEFRAMES)[number];
+
 export type TradeSide = 'long' | 'short';
 export type ExitReason = 'take-profit' | 'stop-loss';
 
@@ -38,7 +42,7 @@ export interface Metadata {
   dataFile: string;
   baseQuantity: number;
   contractMultiplier: number;
-  resolution: string;
+  resolution: Timeframe;
   candles: number;
   trades: number;
   seconds: number;
@@ -71,4 +75,29 @@ export interface TradeMarker {
   timestamp: TimestampMs;
   price: number;
   exitReason?: ExitReason;
+}
+
+export interface BacktestRequest {
+  datasetId?: string;
+  dataFile?: string;
+  baseQuantity?: number;
+  contractMultiplier?: number;
+  seconds?: number;
+  enableLongEntry?: boolean;
+  enableLongTakeProfit?: boolean;
+  enableShortEntry?: boolean;
+  enableShortTakeProfit?: boolean;
+  timeframe?: Timeframe;
+}
+
+export interface DatasetSummary {
+  id: string;
+  filename: string;
+  originalName: string;
+  uploadedAt: string;
+  rows: number;
+  secondsStart: string | null;
+  secondsEnd: string | null;
+  note: string | null;
+  isActive: boolean;
 }
