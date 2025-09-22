@@ -84,6 +84,7 @@ export interface StrategyConfig {
   enableLongTakeProfit: boolean;
   enableShortEntry: boolean;
   enableShortTakeProfit: boolean;
+  timeframe: Timeframe;
 }
 
 export interface MotherBarLevels {

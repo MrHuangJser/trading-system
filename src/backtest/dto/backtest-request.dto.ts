@@ -1,5 +1,6 @@
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsNumber, IsOptional, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { SUPPORTED_TIMEFRAMES } from '../../lib/timeframe';
 
 function transformBoolean({ value }: { value: unknown }): boolean | undefined {
   if (value === undefined || value === null || value === '') {
@@ -61,4 +62,9 @@ export class BacktestRequestDto {
   @Transform(transformBoolean)
   @IsBoolean()
   enableShortTakeProfit?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(SUPPORTED_TIMEFRAMES)
+  timeframe?: string;
 }

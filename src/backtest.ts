@@ -1,4 +1,4 @@
-import { MotherBarStrategy } from './motherBarStrategy';
+import { StrategyEngine } from './strategy';
 import type { BacktestResult, SecondBar, StrategyConfig } from './types';
 import { buildMinuteCandles } from './lib/candles';
 
@@ -16,8 +16,7 @@ export function runBacktest(
 
   const candles = buildMinuteCandles(dataset);
 
-  const strategy = new MotherBarStrategy(config);
-  const summary = strategy.run(dataset);
+  const summary = StrategyEngine.run(dataset, config);
 
   return {
     candles,
@@ -27,7 +26,7 @@ export function runBacktest(
       dataFile: config.dataFile,
       baseQuantity: config.baseQuantity,
       contractMultiplier: config.contractMultiplier,
-      resolution: '1m',
+      resolution: config.timeframe,
       candles: candles.length,
       trades: summary.totalTrades,
       seconds: dataset.length,
