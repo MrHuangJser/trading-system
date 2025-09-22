@@ -9,7 +9,8 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, extname, isAbsolute, resolve } from 'node:path';
 import { loadSecondBars } from '../dataLoader';
 import { resolveConfig } from '../config';
-import { buildMinuteCandles } from '../lib/candles';
+import { buildCandlesForTimeframe } from '../lib/candles';
+import type { Timeframe } from '../lib/timeframe';
 import type { CandleExportRow, SecondBar, StrategyConfig } from '../types';
 import { DatasetRepository } from './dataset.repository';
 import type { DatasetEntity } from './dataset.entity';
@@ -25,7 +26,7 @@ interface SecondsCacheEntry {
   mtimeMs: number;
 }
 
-interface MinuteCacheEntry {
+interface CandlesCacheEntry {
   data: CandleExportRow[];
   mtimeMs: number;
 }
@@ -41,7 +42,7 @@ export class DataService {
   private readonly datasetsDir: string;
   private readonly fallbackCacheKey = '__env__';
   private readonly secondsCache = new Map<string, SecondsCacheEntry>();
-  private readonly minuteCache = new Map<string, MinuteCacheEntry>();
+  private readonly candlesCache = new Map<string, Map<Timeframe, CandlesCacheEntry>>();
 
   constructor(private readonly repository: DatasetRepository) {
     this.datasetsDir = resolve(process.cwd(), 'storage', 'datasets');
@@ -147,23 +148,35 @@ export class DataService {
     return entry.data;
   }
 
-  async getMinuteCandles(): Promise<CandleExportRow[]> {
+  async getCandles(timeframe: Timeframe): Promise<CandleExportRow[]> {
     const dataset = this.repository.findActive();
     const cacheKey = dataset ? dataset.id : this.fallbackCacheKey;
     const secondsEntry = dataset
       ? await this.loadSecondsFromPath(dataset.id, this.buildDatasetPath(dataset.filename))
       : await this.loadSecondsFromPath(cacheKey, resolveConfig().dataFile);
 
-    const cachedMinutes = this.minuteCache.get(cacheKey);
-    if (cachedMinutes && cachedMinutes.mtimeMs === secondsEntry.mtimeMs) {
-      return cachedMinutes.data;
+    let timeframeCache = this.candlesCache.get(cacheKey);
+    if (!timeframeCache) {
+      timeframeCache = new Map();
+      this.candlesCache.set(cacheKey, timeframeCache);
     }
-    const candles = buildMinuteCandles(secondsEntry.data);
-    this.minuteCache.set(cacheKey, {
+
+    const cached = timeframeCache.get(timeframe);
+    if (cached && cached.mtimeMs === secondsEntry.mtimeMs) {
+      return cached.data;
+    }
+
+    const candles = buildCandlesForTimeframe(secondsEntry.data, timeframe);
+    timeframeCache.set(timeframe, {
       data: candles,
       mtimeMs: secondsEntry.mtimeMs,
     });
+
     return candles;
+  }
+
+  async getMinuteCandles(): Promise<CandleExportRow[]> {
+    return this.getCandles('1m');
   }
 
   getBaseConfig(): StrategyConfig {
@@ -179,6 +192,20 @@ export class DataService {
 
   getActiveDataset(): DatasetEntity | null {
     return this.repository.findActive();
+  }
+
+  async loadSecondsFromFile(pathValue: string): Promise<SecondBar[]> {
+    const absolutePath = this.resolveAbsolutePath(pathValue);
+    const entry = await this.loadSecondsFromPath(absolutePath, absolutePath);
+    return entry.data;
+  }
+
+  resolveDataFilePath(pathValue: string): string {
+    return this.resolveAbsolutePath(pathValue);
+  }
+
+  resolveDatasetFilePath(dataset: DatasetEntity): string {
+    return this.buildDatasetPath(dataset.filename);
   }
 
   private async inspectCsv(filePath: string): Promise<CsvAnalysisResult> {
@@ -252,7 +279,7 @@ export class DataService {
     const data = await loadSecondBars(filePath);
     const entry: SecondsCacheEntry = { data, mtimeMs: lastModified };
     this.secondsCache.set(cacheKey, entry);
-    this.minuteCache.delete(cacheKey);
+    this.candlesCache.delete(cacheKey);
     return entry;
   }
 
@@ -287,6 +314,6 @@ export class DataService {
 
   private invalidateCachesForKey(key: string) {
     this.secondsCache.delete(key);
-    this.minuteCache.delete(key);
+    this.candlesCache.delete(key);
   }
 }

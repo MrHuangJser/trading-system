@@ -1,5 +1,6 @@
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import type { Timeframe } from '../../lib/timeframe';
 import { SUPPORTED_TIMEFRAMES } from '../../lib/timeframe';
 
 function transformBoolean({ value }: { value: unknown }): boolean | undefined {
@@ -25,6 +26,14 @@ function transformBoolean({ value }: { value: unknown }): boolean | undefined {
 }
 
 export class BacktestRequestDto {
+  @IsOptional()
+  @IsString()
+  datasetId?: string;
+
+  @IsOptional()
+  @IsString()
+  dataFile?: string;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -66,5 +75,5 @@ export class BacktestRequestDto {
   @IsOptional()
   @IsString()
   @IsIn(SUPPORTED_TIMEFRAMES)
-  timeframe?: string;
+  timeframe?: Timeframe;
 }
