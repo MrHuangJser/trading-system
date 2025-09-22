@@ -1,0 +1,37 @@
+import { MotherBarStrategy } from './motherBarStrategy';
+import type { BacktestResult, SecondBar, StrategyConfig } from './types';
+import { buildMinuteCandles } from './lib/candles';
+
+interface RunOptions {
+  secondLimit?: number | null;
+}
+
+export function runBacktest(
+  seconds: SecondBar[],
+  config: StrategyConfig,
+  options: RunOptions = {},
+): BacktestResult {
+  const { secondLimit = null } = options;
+  const dataset = secondLimit ? seconds.slice(0, secondLimit) : seconds;
+
+  const candles = buildMinuteCandles(dataset);
+
+  const strategy = new MotherBarStrategy(config);
+  const summary = strategy.run(dataset);
+
+  return {
+    candles,
+    summary,
+    metadata: {
+      generatedAt: new Date().toISOString(),
+      dataFile: config.dataFile,
+      baseQuantity: config.baseQuantity,
+      contractMultiplier: config.contractMultiplier,
+      resolution: '1m',
+      candles: candles.length,
+      trades: summary.totalTrades,
+      seconds: dataset.length,
+      secondLimit,
+    },
+  };
+}

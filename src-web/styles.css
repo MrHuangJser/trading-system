@@ -1,0 +1,210 @@
+:root {
+  color-scheme: dark;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: #0b0d12;
+  color: #f1f3f5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: #0b0d12;
+}
+
+.app {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.app--status {
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+}
+
+.status {
+  padding: 16px 24px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 16px;
+}
+
+.status--error {
+  background: rgba(255, 71, 87, 0.16);
+  color: #ffc9c9;
+}
+
+.app__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.app__header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.app__subtitle {
+  margin: 4px 0 0;
+  color: #868e96;
+}
+
+.app__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 14px;
+  color: #adb5bd;
+}
+
+.app__section {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.app__section--chart {
+  padding: 0;
+}
+
+.summary-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.summary-panel__group h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.summary-panel__items {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.summary-panel__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.summary-panel__label {
+  font-size: 13px;
+  color: #adb5bd;
+}
+
+.summary-panel__value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.summary-panel__value--up {
+  color: #69db7c;
+}
+
+.summary-panel__value--down {
+  color: #ff8787;
+}
+
+.chart-panel {
+  height: 520px;
+}
+
+.chart-panel__canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.trade-table {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trade-table__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.trade-table__header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.trade-table__header span {
+  color: #adb5bd;
+  font-size: 14px;
+}
+
+.trade-table__body {
+  max-height: 360px;
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.trade-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.trade-table thead {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.trade-table th,
+.trade-table td {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.trade-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.trade-row--profit td:nth-child(7),
+.trade-row--profit td:nth-child(8) {
+  color: #69db7c;
+}
+
+.trade-row--loss td:nth-child(7),
+.trade-row--loss td:nth-child(8) {
+  color: #ff8787;
+}
+
+.trade-table small {
+  display: block;
+  color: #868e96;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .trade-table__body {
+    max-height: 280px;
+  }
+
+  .chart-panel {
+    height: 420px;
+  }
+}

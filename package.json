@@ -1,0 +1,31 @@
+{
+  "name": "mother-bar-strategy",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/express": "^5.0.3",
+    "@types/react": "19",
+    "@types/react-dom": "19",
+    "@vitejs/plugin-react": "^5.0.3",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.7"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/platform-express": "^11.1.6",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "klinecharts": "^10.0.0-alpha5",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "scripts": {
+    "web:dev": "vite --config vite.config.ts",
+    "web:build": "vite build --config vite.config.ts",
+    "web:preview": "vite preview --config vite.config.ts",
+    "api:serve": "bun run src/main.ts"
+  }
+}
