@@ -97,11 +97,10 @@ export class PositionManager {
     this.position.addEntryTime = sample.timestamp;
 
     if (this.position.takeProfitEnabled) {
-      if (this.position.side === 'long') {
-        this.position.takeProfit = motherBar.levels.n61_8;
-      } else {
-        this.position.takeProfit = motherBar.levels.p161_8;
-      }
+      const updatedTakeProfit =
+        this.position.side === 'long' ? motherBar.levels.p161_8 : motherBar.levels.n61_8;
+
+      this.position.takeProfit = updatedTakeProfit;
     }
   }
 
