@@ -8,6 +8,6 @@ export class CandlesController {
 
   @Get()
   getCandles(@Query() query: GetCandlesDto) {
-    return this.candlesService.getPaginated(query.page, query.pageSize);
+    return this.candlesService.getPaginated(query.page, query.pageSize, query.timeframe);
   }
 }
