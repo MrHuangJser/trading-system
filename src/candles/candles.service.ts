@@ -19,8 +19,8 @@ export interface PaginatedCandles {
 export class CandlesService {
   constructor(private readonly dataService: DataService) {}
 
-  getPaginated(page: number, pageSize: number): PaginatedCandles {
-    const candles = this.dataService.getMinuteCandles();
+  async getPaginated(page: number, pageSize: number): Promise<PaginatedCandles> {
+    const candles = await this.dataService.getMinuteCandles();
     const total = candles.length;
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const safePage = Math.min(page, totalPages);
