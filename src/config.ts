@@ -1,3 +1,5 @@
+import type { Timeframe } from './lib/timeframe';
+import { isTimeframe, SUPPORTED_TIMEFRAMES } from './lib/timeframe';
 import type { StrategyConfig } from './types';
 
 interface ParsedArgs {
@@ -61,6 +63,7 @@ export function resolveConfig(args: string[] = Bun.argv.slice(2)): StrategyConfi
   const enableLongTakeProfit = parseBoolean(flags['enable-long-tp'] ?? Bun.env.ENABLE_LONG_TP, true);
   const enableShortEntry = parseBoolean(flags['enable-short-entry'] ?? Bun.env.ENABLE_SHORT_ENTRY, true);
   const enableShortTakeProfit = parseBoolean(flags['enable-short-tp'] ?? Bun.env.ENABLE_SHORT_TP, true);
+  const timeframe = resolveTimeframe(flags['timeframe'] ?? Bun.env.TIMEFRAME);
   return {
     dataFile,
     baseQuantity: Math.trunc(baseQuantity),
@@ -69,5 +72,16 @@ export function resolveConfig(args: string[] = Bun.argv.slice(2)): StrategyConfi
     enableLongTakeProfit,
     enableShortEntry,
     enableShortTakeProfit,
+    timeframe,
   };
+}
+
+function resolveTimeframe(raw: unknown): Timeframe {
+  const value = typeof raw === 'string' && raw.trim().length > 0 ? raw.trim() : '1m';
+  if (!isTimeframe(value)) {
+    throw new Error(
+      `Unsupported timeframe "${value}". Supported values: ${SUPPORTED_TIMEFRAMES.join(', ')}`,
+    );
+  }
+  return value;
 }

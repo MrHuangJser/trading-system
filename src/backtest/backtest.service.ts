@@ -21,6 +21,7 @@ export class BacktestService {
       enableLongTakeProfit: request.enableLongTakeProfit ?? baseConfig.enableLongTakeProfit,
       enableShortEntry: request.enableShortEntry ?? baseConfig.enableShortEntry,
       enableShortTakeProfit: request.enableShortTakeProfit ?? baseConfig.enableShortTakeProfit,
+      timeframe: request.timeframe ?? baseConfig.timeframe,
     };
 
     const seconds = await this.dataService.getSeconds();
