@@ -1,4 +1,4 @@
-import { MinuteAggregator } from '../aggregation';
+import { TimeframeAggregator } from '../aggregation';
 import { timestampToUnixMs } from '../time';
 import type { CandleExportRow, SecondBar } from '../types';
 
@@ -6,7 +6,7 @@ import type { CandleExportRow, SecondBar } from '../types';
  * Convert 1-second OHLCV samples into 1-minute candles.
  */
 export function buildMinuteCandles(seconds: SecondBar[]): CandleExportRow[] {
-  const aggregator = new MinuteAggregator();
+  const aggregator = new TimeframeAggregator('1m');
   const minuteBars = [];
   for (const sample of seconds) {
     const completed = aggregator.add(sample);

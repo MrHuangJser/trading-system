@@ -1,4 +1,4 @@
-import { MinuteAggregator } from "./aggregation";
+import { TimeframeAggregator } from "./aggregation";
 import { isRegularTradingHours, minuteKey } from "./time";
 import type {
   BacktestSummary,
@@ -31,7 +31,7 @@ interface EntryResult {
 }
 
 export class MotherBarStrategy {
-  private readonly aggregator = new MinuteAggregator();
+  private readonly aggregator = new TimeframeAggregator("1m");
   private readonly trades: TradeRecord[] = [];
   private readonly totals: StrategyTotals = {
     netPnlPoints: 0,
