@@ -13,6 +13,73 @@
 - 每个RTH开始时重新寻找MB，忽略之前的MB状态
 - 建立持仓期间的新MB记录机制，避免冲突交易
 
+## 系统集成与数据流更新
+
+### 上传到回测的端到端流程
+
+1. `POST /api/data/upload` 接收前端上传的秒级 CSV。文件首先写入 `storage/uploads`，通过列头与数值校验后转存到 `storage/datasets/<uuid>.csv`。
+2. 同步在 SQLite (`storage/data.sqlite`) 中写入数据集元信息：原始文件名、行数、首尾时间戳、备注以及激活状态。`activate=true` 或无激活数据集时会自动将其设为当前数据源。
+3. 数据集一旦激活，`DataService.getBaseConfig()` 会以它的绝对路径覆盖策略配置中的 `dataFile` 字段，后续的蜡烛聚合与回测均使用该文件。
+4. `DataService` 将秒级数据与派生的多周期蜡烛缓存在内存中；当切换激活数据集或源文件发生变动时会自动失效缓存。
+5. 回测通过 `POST /api/backtest` 触发，可传入 `datasetId` 或 `dataFile`，二者二选一。请求体中的 `timeframe` 会覆盖默认周期，用于 `runBacktest` 聚合及策略执行。
+
+### 数据存储与结构
+
+- `storage/uploads/`：临时目录，服务在启动时确保存在，文件处理完毕后即删除。
+- `storage/datasets/`：永久保存原始 CSV，文件名与 SQLite `datasets` 表的 `id` 一致。
+- `storage/data.sqlite`：数据集索引库，结构如下：
+
+  | 字段 | 类型 | 描述 |
+  |------|------|------|
+  | id | TEXT PRIMARY KEY | 数据集 UUID |
+  | filename | TEXT | 对应 `storage/datasets` 下的文件 |
+  | originalName | TEXT | 上传时的原始文件名 |
+  | uploadedAt | TEXT | ISO8601 上传时间 |
+  | rows | INTEGER | 数据行数（不含表头） |
+  | secondsStart | TEXT | 第一条记录时间戳 |
+  | secondsEnd | TEXT | 最后一条记录时间戳 |
+  | note | TEXT | 上传备注 |
+  | isActive | INTEGER | 是否为激活数据集 |
+
+### API 端点与示例
+
+- `POST /api/data/upload`：多部分表单上传 CSV，支持 `note` 与 `activate` 字段。响应中新增 `rows`、`secondsStart`、`secondsEnd` 字段。
+- `GET /api/data`：返回所有数据集元信息数组，`isActive=true` 为当前使用的数据源。
+- `PATCH /api/data/:id/activate`：切换激活数据集，触发后端缓存失效。
+- `DELETE /api/data/:id`：删除数据集与对应文件。
+- `POST /api/backtest`：请求体可包含 `datasetId`、`dataFile`、`timeframe` 以及策略开关。返回结构包含 `metadata`、`summary`、`candles`、`trades`。
+- `GET /api/candles?page=1&pageSize=500&timeframe=5m`：按周期返回分页蜡烛数据，供前端图表消费。
+
+回测请求示例：
+
+```json
+{
+  "datasetId": "a3e8-uuid",
+  "timeframe": "15m",
+  "baseQuantity": 2,
+  "enableLongEntry": true,
+  "enableShortEntry": false
+}
+```
+
+### 时间框架选择
+
+- 默认周期来自配置解析顺序：CLI `--timeframe` → 环境变量 `TIMEFRAME` → 默认 `1m`。
+- `POST /api/backtest` 的 `timeframe` 字段允许在单次回测中覆盖默认配置。
+- `GET /api/candles` 的查询参数 `timeframe` 同样遵循 `SUPPORTED_TIMEFRAMES` 列表（如 `1m`, `5m`, `15m`, `30m`, `1h`）。
+
+### 部署与运维注意事项
+
+- **目录权限**：部署前创建 `storage/`, `storage/uploads/`, `storage/datasets/` 并确保运行账户拥有读写权限，避免上传失败。
+- **SQLite 备份**：可通过 `sqlite3 storage/data.sqlite ".backup 'backup/data-$(date +%F).sqlite'"`、文件系统快照或容器卷备份定期保存；备份期间避免高频写操作。
+- **内存缓存**：当前实现会缓存整套秒级数据及所有请求过的周期蜡烛。部署在内存受限环境时需控制单个 CSV 大小，或安排定期重启/切换数据集以释放缓存。
+
+### 前端联调提醒
+
+- 数据集接口新增 `rows`、`secondsStart`、`secondsEnd` 字段以及 `note`、`isActive` 的可靠返回，请确保 UI 展示与筛选逻辑同步更新。
+- 回测响应同时返回 `candles` 与 `trades` 数组，`summary.trades` 仍然存在但建议改读顶层 `trades`，避免字段调整带来的兼容问题。
+- 切换激活数据集或上传新数据后缓存刷新可能导致蜡烛数量变化，前端应在操作完成后重新请求 `GET /api/candles` 并根据 `metadata.timeframe` 调整展示。
+
 ## 核心问题分析
 
 ### 现有实现的主要问题
