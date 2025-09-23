@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import ChartPanel from './ChartPanel';
+import ChartPanel, { type ChartPanelHandle } from './ChartPanel';
 import SummaryPanel from './SummaryPanel';
 import TradeTable from './TradeTable';
 import { runBacktest } from '../api/backtest';
@@ -14,6 +14,7 @@ import {
 } from '../types';
 import type { JSX } from 'react';
 import DatasetManager from './DatasetManager';
+import { normalizeCandles } from '../utils/candles';
 
 interface FormState {
   timeframe: Timeframe;
@@ -80,6 +81,7 @@ export default function BacktestView(): JSX.Element {
   const [datasetError, setDatasetError] = useState<string | null>(null);
   const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
   const mountedRef = useRef(true);
+  const chartPanelRef = useRef<ChartPanelHandle | null>(null);
 
   useEffect(() => {
     return () => {
@@ -198,6 +200,22 @@ export default function BacktestView(): JSX.Element {
       return [entry, exit];
     });
   }, [payload]);
+
+  useEffect(() => {
+    if (!payload) {
+      return;
+    }
+    const chart = chartPanelRef.current;
+    if (!chart) {
+      return;
+    }
+    chart.replaceData({
+      timeframe: payload.metadata.resolution,
+      candles: normalizeCandles(payload.candles),
+      markers,
+      trades: payload.trades,
+    });
+  }, [markers, payload]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -415,7 +433,7 @@ export default function BacktestView(): JSX.Element {
       </section>
 
       <section className="app__section app__section--chart">
-        <ChartPanel candles={payload.candles} markers={markers} trades={payload.trades} />
+        <ChartPanel ref={chartPanelRef} timeframe={payload.metadata.resolution} />
       </section>
 
       <section className="app__section">
