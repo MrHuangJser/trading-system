@@ -14,7 +14,8 @@
     "verbatimModuleSyntax": false
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "src-backend/**/*.ts"
   ],
   "exclude": [
     "src-web",
