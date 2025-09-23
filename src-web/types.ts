@@ -2,6 +2,46 @@ export const SUPPORTED_TIMEFRAMES = ['1m', '5m', '15m', '30m', '1h'] as const;
 
 export type Timeframe = (typeof SUPPORTED_TIMEFRAMES)[number];
 
+export interface ParsedTimestamp {
+  raw: string;
+  date: string;
+  time: string;
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+}
+
+export interface SecondBar {
+  timestamp: ParsedTimestamp;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface TimeframeBar {
+  startTimestamp: ParsedTimestamp;
+  endTimestamp: ParsedTimestamp;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  timeframe: Timeframe;
+}
+
+export type ReplayTimeframeState = 'forming' | 'completed';
+
+export interface ReplayFeedEvent {
+  secondBar: SecondBar;
+  timeframeBar: TimeframeBar;
+  timeframeState: ReplayTimeframeState;
+}
+
 export type TradeSide = 'long' | 'short';
 export type ExitReason = 'take-profit' | 'stop-loss';
 
