@@ -14,6 +14,7 @@ import {
 } from '../types';
 import type { JSX } from 'react';
 import DatasetManager from './DatasetManager';
+import RealtimeFeedPanel from './RealtimeFeedPanel';
 
 interface FormState {
   timeframe: Timeframe;
@@ -408,6 +409,10 @@ export default function BacktestView(): JSX.Element {
             {submitError ? <span className="backtest-form__error">{submitError}</span> : null}
           </div>
         </form>
+      </section>
+
+      <section className="app__section">
+        <RealtimeFeedPanel timeframe={form.timeframe} datasetId={selectedDatasetId} />
       </section>
 
       <section className="app__section">

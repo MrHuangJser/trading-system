@@ -101,3 +101,43 @@ export interface DatasetSummary {
   note: string | null;
   isActive: boolean;
 }
+
+export interface FeedParsedTimestamp {
+  raw: string;
+  date: string;
+  time: string;
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+}
+
+export interface FeedSecondBar {
+  timestamp: FeedParsedTimestamp;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface FeedTimeframeBar {
+  startTimestamp: FeedParsedTimestamp;
+  endTimestamp: FeedParsedTimestamp;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  timeframe: Timeframe;
+}
+
+export type FeedTimeframeState = 'forming' | 'completed';
+
+export interface FeedEvent {
+  secondBar: FeedSecondBar;
+  timeframeBar: FeedTimeframeBar;
+  timeframeState: FeedTimeframeState;
+}

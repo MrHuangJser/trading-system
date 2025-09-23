@@ -14,14 +14,18 @@ import type { JSX } from 'react';
 
 interface ChartPanelProps {
   candles: CandleDatum[];
-  markers: TradeMarker[];
-  trades: TradeDatum[];
+  markers?: TradeMarker[];
+  trades?: TradeDatum[];
+  mode?: 'static' | 'streaming';
 }
 
 const TRADE_OVERLAY_NAME = 'tradeMarker';
 const SEGMENT_OVERLAY_NAME = 'segment';
 
 let overlayRegistered = false;
+
+const EMPTY_MARKERS: TradeMarker[] = [];
+const EMPTY_TRADES: TradeDatum[] = [];
 
 function ensureTradeOverlay(): void {
   if (overlayRegistered) {
@@ -88,9 +92,18 @@ function ensureTradeOverlay(): void {
   overlayRegistered = true;
 }
 
-export default function ChartPanel({ candles, markers, trades }: ChartPanelProps): JSX.Element {
+export default function ChartPanel({
+  candles,
+  markers,
+  trades,
+  mode = 'static',
+}: ChartPanelProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<Chart | null>(null);
+  const streamingSnapshotRef = useRef<{ lastTimestamp: number | null; length: number }>({
+    lastTimestamp: null,
+    length: 0,
+  });
 
   useEffect(() => {
     ensureTradeOverlay();
@@ -137,17 +150,51 @@ export default function ChartPanel({ candles, markers, trades }: ChartPanelProps
     if (!chart) {
       return;
     }
+    if (mode === 'streaming') {
+      const length = klineData.length;
+      const last = length > 0 ? klineData[length - 1] : null;
+      const snapshot = streamingSnapshotRef.current;
+
+      if (!last) {
+        chart.applyNewData([]);
+        chart.scrollToRealTime();
+        streamingSnapshotRef.current = { lastTimestamp: null, length: 0 };
+        return;
+      }
+
+      const hasReset =
+        length < snapshot.length ||
+        snapshot.lastTimestamp === null ||
+        length - snapshot.length > 1 ||
+        last.timestamp < snapshot.lastTimestamp;
+
+      if (hasReset) {
+        chart.applyNewData(klineData);
+      } else {
+        chart.updateData(last);
+      }
+
+      chart.scrollToRealTime();
+      streamingSnapshotRef.current = { lastTimestamp: last.timestamp, length };
+      return;
+    }
+
     chart.applyNewData(klineData);
     chart.scrollToRealTime();
-  }, [klineData]);
+    streamingSnapshotRef.current = {
+      lastTimestamp: klineData.length > 0 ? klineData[klineData.length - 1].timestamp : null,
+      length: klineData.length,
+    };
+  }, [klineData, mode]);
 
+  const resolvedMarkers = markers ?? EMPTY_MARKERS;
   useEffect(() => {
     const chart = chartRef.current;
     if (!chart) {
       return;
     }
     chart.removeOverlay({ name: TRADE_OVERLAY_NAME });
-    markers.forEach((marker) => {
+    resolvedMarkers.forEach((marker) => {
       chart.createOverlay({
         id: marker.id,
         name: TRADE_OVERLAY_NAME,
@@ -160,15 +207,16 @@ export default function ChartPanel({ candles, markers, trades }: ChartPanelProps
         ],
       });
     });
-  }, [markers]);
+  }, [resolvedMarkers]);
 
+  const resolvedTrades = trades ?? EMPTY_TRADES;
   useEffect(() => {
     const chart = chartRef.current;
     if (!chart) {
       return;
     }
     chart.removeOverlay({ name: SEGMENT_OVERLAY_NAME });
-    trades.forEach((trade) => {
+    resolvedTrades.forEach((trade) => {
       const color = trade.pnlPoints >= 0 ? '#51cf66' : '#ff6b6b';
       chart.createOverlay({
         id: `${trade.id}-segment`,
@@ -186,7 +234,7 @@ export default function ChartPanel({ candles, markers, trades }: ChartPanelProps
         },
       });
     });
-  }, [trades]);
+  }, [resolvedTrades]);
 
   return (
     <div className="chart-panel">
