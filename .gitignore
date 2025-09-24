@@ -9,3 +9,6 @@ node_modules
 .github/instructions/nx.instructions.md
 
 dist
+
+.env.local
+.env.*.local

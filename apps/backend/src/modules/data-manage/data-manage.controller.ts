@@ -2,15 +2,22 @@ import {
   Controller,
   Get,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import fs from 'fs';
 import path from 'path';
+import {
+  AggregationService,
+  Timeframe,
+} from '../shared/services/aggregation.service';
 
 @Controller('data-manage')
 export class DataManageController {
+  constructor(private readonly aggregationService: AggregationService) {}
+
   @Post('upload-dataset')
   @UseInterceptors(FileInterceptor('file'))
   async uploadDataset(@UploadedFile() file: Express.Multer.File) {
@@ -34,6 +41,20 @@ export class DataManageController {
     return {
       message: 'Dataset list',
       files,
+    };
+  }
+
+  @Get('aggregate-dataset')
+  async aggregateDataset(
+    @Query('filename') filename: string,
+    @Query('timeframe') timeframe: Timeframe
+  ) {
+    const filePath = path.join(process.cwd(), 'storage', 'dataset', filename);
+    const result = await this.aggregationService.aggregate(filePath, timeframe);
+
+    return {
+      message: 'Dataset aggregated',
+      result,
     };
   }
 }
