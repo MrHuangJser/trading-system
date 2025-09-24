@@ -7,7 +7,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import fs from 'fs';
+import fs from 'fs-extra';
 import path from 'path';
 import {
   AggregationService,
@@ -16,7 +16,9 @@ import {
 
 @Controller('data-manage')
 export class DataManageController {
-  constructor(private readonly aggregationService: AggregationService) {}
+  constructor(private readonly aggregationService: AggregationService) {
+    fs.ensureDirSync(path.join(process.cwd(), 'storage', 'dataset'));
+  }
 
   @Post('upload-dataset')
   @UseInterceptors(FileInterceptor('file'))
@@ -25,7 +27,7 @@ export class DataManageController {
       process.cwd(),
       'storage',
       'dataset',
-      file.filename
+      file.originalname
     );
     fs.writeFileSync(filePath, file.buffer);
     return {

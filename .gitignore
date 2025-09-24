@@ -8,7 +8,8 @@ node_modules
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
-dist
+/dist
+/storage
 
 .env.local
 .env.*.local

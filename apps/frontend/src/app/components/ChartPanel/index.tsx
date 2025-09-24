@@ -1,11 +1,22 @@
 import classnames from 'classnames';
-import { dispose, init, type Chart } from 'klinecharts';
-import { omit } from 'lodash';
-import { memo, useEffect, useRef, type FC, type HTMLAttributes } from 'react';
+import { dispose, init, type Chart, type KLineData } from 'klinecharts';
+import { memo, useEffect, useRef, type FC } from 'react';
 
-export type ChartPanelProps = HTMLAttributes<HTMLDivElement>;
+export interface CandleData {
+  timestamp: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
 
-export const ChartPanel: FC<ChartPanelProps> = memo(({ ...props }) => {
+export interface ChartPanelProps {
+  className?: string;
+  data: KLineData[];
+}
+
+export const ChartPanel: FC<ChartPanelProps> = memo(({ data, className }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<Chart>(null);
 
@@ -21,11 +32,11 @@ export const ChartPanel: FC<ChartPanelProps> = memo(({ ...props }) => {
     };
   }, []);
 
-  return (
-    <div
-      ref={chartContainerRef}
-      className={classnames('w-full h-full', props.className)}
-      {...omit(props, 'className')}
-    ></div>
-  );
+  useEffect(() => {
+    if (chartInstance.current) {
+      chartInstance.current.applyNewData(data, false);
+    }
+  }, [data]);
+
+  return <div ref={chartContainerRef} className={classnames(className)}></div>;
 });
