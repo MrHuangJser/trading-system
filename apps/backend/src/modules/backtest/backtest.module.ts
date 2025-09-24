@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
-import { SharedModule } from '../shared/shared.module';
 import { BacktestController } from './backtest.controller';
+import { BacktestService } from './backtest.service';
+import { OrderBookService } from './orders/order-book.service';
 
 @Module({
-  imports: [SharedModule],
+  imports: [],
   controllers: [BacktestController],
-  providers: [],
-  exports: [],
+  providers: [BacktestService, OrderBookService],
+  exports: [BacktestService, OrderBookService],
 })
 export class BacktestModule {}

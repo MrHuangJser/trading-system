@@ -7,10 +7,13 @@ import {
   Get,
 } from '@nestjs/common';
 import { RunBacktestBodyDto } from './dto/run-backtest.dto';
+import { BacktestService } from './backtest.service';
 
 @Controller('backtest')
 @UsePipes(new ValidationPipe())
 export class BacktestController {
+  constructor(private readonly backtestService: BacktestService) {}
+
   @Get('strategy-list')
   async getStrategyList() {
     return [
@@ -56,5 +59,7 @@ export class BacktestController {
   }
 
   @Post('run')
-  async runBacktest(@Body() body: RunBacktestBodyDto) {}
+  async runBacktest(@Body() body: RunBacktestBodyDto) {
+    return this.backtestService.run(body);
+  }
 }
