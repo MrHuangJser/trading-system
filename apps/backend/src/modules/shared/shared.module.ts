@@ -1,8 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AggregationService } from './services/aggregation.service';
-import { DataFeedService } from './services/data-feed.service';
 
-const SERVICES = [AggregationService, DataFeedService];
+const SERVICES = [AggregationService];
 
 @Module({
   imports: [],

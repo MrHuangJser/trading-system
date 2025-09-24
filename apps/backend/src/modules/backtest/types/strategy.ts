@@ -1,4 +1,4 @@
-import type { OhlcvRecord } from '../../shared/services/aggregation.service';
+import type { OhlcvRecord } from '../../shared/types/ohlcv';
 
 export interface Strategy<Params> {
   onInit(params: Params): void;

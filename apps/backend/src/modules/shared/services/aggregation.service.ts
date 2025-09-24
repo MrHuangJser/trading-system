@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import fs from 'fs';
 import readline from 'readline';
-
-export enum Timeframe {
-  ONE_MINUTE = '1m',
-  FIVE_MINUTES = '5m',
-  FIFTEEN_MINUTES = '15m',
-  THIRTY_MINUTES = '30m',
-  ONE_HOUR = '1h',
-}
+import { Timeframe, OhlcvRecord } from '../types/ohlcv';
+import {
+  buildCandleFromSeed,
+  getBucketStart,
+  getTimeframeSeconds,
+} from '../utils/aggregation.utils';
 
 @Injectable()
 export class AggregationService {
@@ -21,7 +19,7 @@ export class AggregationService {
     sourceFilePath: string,
     timeframe: Timeframe
   ): Promise<OhlcvRecord[]> {
-    const timeframeSeconds = this.getTimeframeSeconds(timeframe);
+    const timeframeSeconds = getTimeframeSeconds(timeframe);
     if (!timeframeSeconds) {
       throw new Error(`Unsupported timeframe: ${timeframe}`);
     }
@@ -71,7 +69,7 @@ export class AggregationService {
         continue;
       }
 
-      const bucketStart = epochSeconds - (epochSeconds % timeframeSeconds);
+      const bucketStart = getBucketStart(epochSeconds, timeframeSeconds);
 
       if (currentBucketStart === null || bucketStart !== currentBucketStart) {
         if (currentBucket) {
@@ -79,14 +77,10 @@ export class AggregationService {
         }
 
         currentBucketStart = bucketStart;
-        currentBucket = {
-          datetime: this.formatTimestamp(bucketStart),
-          open,
-          high,
-          low,
-          close,
-          volume,
-        };
+        currentBucket = buildCandleFromSeed(
+          { open, high, low, close, volume },
+          bucketStart
+        );
         continue;
       }
       if (currentBucket) {
@@ -106,40 +100,7 @@ export class AggregationService {
     return results;
   }
 
-  private getTimeframeSeconds(timeframe: Timeframe) {
-    const timeframeSecondsMap: Record<Timeframe, number> = {
-      [Timeframe.ONE_MINUTE]: 60,
-      [Timeframe.FIVE_MINUTES]: 5 * 60,
-      [Timeframe.FIFTEEN_MINUTES]: 15 * 60,
-      [Timeframe.THIRTY_MINUTES]: 30 * 60,
-      [Timeframe.ONE_HOUR]: 60 * 60,
-    };
-
-    return timeframeSecondsMap[timeframe];
-  }
-
   private getEpochSeconds(timestamp: string) {
     return Math.floor(new Date(timestamp).getTime() / 1000);
   }
-
-  private formatTimestamp(epochSeconds: number) {
-    const date = new Date(epochSeconds * 1000);
-    const pad = (value: number) => value.toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const month = pad(date.getMonth() + 1);
-    const day = pad(date.getDate());
-    const hours = pad(date.getHours());
-    const minutes = pad(date.getMinutes());
-    const seconds = pad(date.getSeconds());
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  }
-}
-
-export interface OhlcvRecord {
-  datetime: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
 }

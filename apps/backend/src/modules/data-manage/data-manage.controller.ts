@@ -9,10 +9,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import fs from 'fs-extra';
 import path from 'path';
-import {
-  AggregationService,
-  Timeframe,
-} from '../shared/services/aggregation.service';
+import { AggregationService } from '../shared/services/aggregation.service';
+import { Timeframe } from '../shared/types/ohlcv';
 
 @Controller('data-manage')
 export class DataManageController {

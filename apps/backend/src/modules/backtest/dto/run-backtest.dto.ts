@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsObject, IsOptional } from 'class-validator';
-import { Timeframe } from '../../shared/services/aggregation.service';
+import { Timeframe } from '../../shared/types/ohlcv';
 
 export class RunBacktestBodyDto {
   @IsNotEmpty()
