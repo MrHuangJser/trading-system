@@ -15,8 +15,7 @@
         "index": "apps/backend/src/index.html",
         "main": "apps/backend/src/main.ts",
         "tsConfig": "apps/backend/tsconfig.app.json",
-        "rspackConfig": "apps/backend/rspack.config.js",
-        "assets": ["apps/backend/src/assets"]
+        "rspackConfig": "apps/backend/rspack.config.js"
       },
       "configurations": {
         "development": {
