@@ -16,9 +16,14 @@ export class StrategyRegistryService {
   constructor() {
     const bullishClose: RegistryEntry = {
       name: 'BullishCloseOneMinute',
-      description:
-        '1m 回测：阳线收盘后开多，止盈 +1 点，止损为当前 K 线低点。',
-      supportedTimeframes: [Timeframe.ONE_MINUTE],
+      description: '1m 回测：阳线收盘后开多，止盈 +1 点，止损为当前 K 线低点。',
+      supportedTimeframes: [
+        Timeframe.ONE_MINUTE,
+        Timeframe.FIVE_MINUTES,
+        Timeframe.FIFTEEN_MINUTES,
+        Timeframe.THIRTY_MINUTES,
+        Timeframe.ONE_HOUR,
+      ],
       create: () => createBullishCloseStrategy(),
     };
 
@@ -36,7 +41,10 @@ export class StrategyRegistryService {
     );
   }
 
-  createStrategy(name: string, params: Record<string, unknown>): StrategyInstance {
+  createStrategy(
+    name: string,
+    params: Record<string, unknown>
+  ): StrategyInstance {
     const entry = this.strategies.get(name);
     if (!entry) {
       throw new Error(`策略 ${name} 未注册`);
