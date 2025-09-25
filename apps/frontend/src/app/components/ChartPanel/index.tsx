@@ -2,6 +2,7 @@ import classnames from 'classnames';
 import {
   dispose,
   init,
+  OverlayCreateFiguresCallbackParams,
   registerOverlay,
   type Chart,
   type KLineData,
@@ -48,10 +49,7 @@ const ensureTradeOverlayRegistered = () => {
     createPointFigures: ({
       coordinates,
       overlay,
-    }: {
-      coordinates: any;
-      overlay: any;
-    }) => {
+    }: OverlayCreateFiguresCallbackParams) => {
       if (!coordinates.length) {
         return [];
       }
@@ -130,7 +128,7 @@ const ensureTradeOverlayRegistered = () => {
         },
       ];
     },
-  } as any);
+  });
   overlayRegistered = true;
 };
 
@@ -145,6 +143,9 @@ export const ChartPanel: FC<ChartPanelProps> = memo(
       const chartDom = chartContainerRef.current;
       if (chartDom) {
         chartInstance.current = init(chartDom, {});
+        chartInstance.current?.setPaneOptions({
+          id: 'candle_pane',
+        });
       }
       return () => {
         if (chartInstance.current && overlayIdsRef.current.length > 0) {
@@ -196,7 +197,7 @@ export const ChartPanel: FC<ChartPanelProps> = memo(
           extendData: {
             direction: marker.direction,
           },
-        } as any);
+        });
 
         if (typeof overlayId === 'string') {
           overlayIdsRef.current.push(overlayId);
