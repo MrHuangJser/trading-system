@@ -47,9 +47,9 @@ export class BacktestClock {
   async run(stream: AsyncIterable<MarketTick> | Iterable<MarketTick>) {
     for await (const tick of toAsyncIterable(stream)) {
       this.currentTick = tick;
-      await this.emitTick(tick);
       this.assembler.accumulate(tick);
       await this.emitClosedCandles();
+      await this.emitTick(tick);
     }
 
     const tail = this.assembler.flush();

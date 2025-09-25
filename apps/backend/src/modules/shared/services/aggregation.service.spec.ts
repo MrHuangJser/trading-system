@@ -2,7 +2,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { AggregationService, Timeframe } from './aggregation.service';
+import { AggregationService } from './aggregation.service';
+import { Timeframe } from '../types/ohlcv';
 
 const SAMPLE_CSV = `datetime,open,high,low,close,volume
 2023-09-15 08:30:00,100,100,100,100,10
