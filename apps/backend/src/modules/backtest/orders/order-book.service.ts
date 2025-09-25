@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { MarketTick } from '../../shared/types/market';
 import {
@@ -24,9 +25,15 @@ interface ManagedOrder {
   clientOrderId?: string;
 }
 
-export class OrderBook {
+@Injectable()
+export class OrderBookService {
   private readonly openOrders = new Map<string, ManagedOrder>();
   private readonly history = new Map<string, ManagedOrder>();
+
+  reset() {
+    this.openOrders.clear();
+    this.history.clear();
+  }
 
   submit(request: OrderRequest, now: number = Date.now()): OrderSnapshot {
     this.validateRequest(request);
@@ -45,17 +52,7 @@ export class OrderBook {
       clientOrderId: request.clientOrderId,
     };
 
-    if (order.type === OrderType.MARKET) {
-      order.status = OrderStatus.PENDING;
-    }
-
-    if (
-      order.type === OrderType.LIMIT ||
-      order.type === OrderType.STOP_MARKET
-    ) {
-      order.status = OrderStatus.PENDING;
-    }
-
+    order.status = OrderStatus.PENDING;
     this.openOrders.set(order.id, order);
     return this.toSnapshot(order);
   }
