@@ -1,34 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { Timeframe } from '../../shared/types/ohlcv';
 import {
   StrategyDefinition,
   StrategyInstance,
   StrategyListItem,
 } from '../types/strategy';
-import { createBullishCloseStrategy } from './bullish-close.strategy';
 
 type RegistryEntry = StrategyDefinition;
 
 @Injectable()
 export class StrategyRegistryService {
   private readonly strategies = new Map<string, RegistryEntry>();
-
-  constructor() {
-    const bullishClose: RegistryEntry = {
-      name: 'BullishCloseOneMinute',
-      description: '1m 回测：阳线收盘后开多，止盈 +1 点，止损为当前 K 线低点。',
-      supportedTimeframes: [
-        Timeframe.ONE_MINUTE,
-        Timeframe.FIVE_MINUTES,
-        Timeframe.FIFTEEN_MINUTES,
-        Timeframe.THIRTY_MINUTES,
-        Timeframe.ONE_HOUR,
-      ],
-      create: () => createBullishCloseStrategy(),
-    };
-
-    this.strategies.set(bullishClose.name, bullishClose);
-  }
 
   listStrategies(): StrategyListItem[] {
     return Array.from(this.strategies.values()).map(
